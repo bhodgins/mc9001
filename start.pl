@@ -33,36 +33,36 @@ sub authenticate {
 
 sub machine_thread {
     my ($so_client, $queue, $processor) = @_;
-	my $operand;
+    my $operand;
     
     print "Thread on " . fileno($so_client) . " is waiting for instruction\n";
-	
-	sysread($so_client, $operand, 1);
-	
-	# Read memory
-	if    ($operand == 0x00) {
-		sysread($so_client, my $addr, 2) || exit;
-		syswrite($so_client, $processor->read($addr));
-	}
-	
-	# Write memory
-	elsif ($operand == 0x01) {
-		sysread($so_client, my $addr, 2) || exit;
-		sysread($so_client, my $byte, 1) || exit;
-		$processor->write($addr, $byte);
-	}
-	
-	# Set pin to high
-	elsif ($operand == 0x02) {
-		$processor->pin(sysread($so_client, my $pin, 1) || exit, 1);
-	}
-	
-	# Set pin to low
-	elsif ($operand == 0x03) {
-		$processor->pin(sysread($so_client, my $pin, 1) || exit, 0);
-	}
-	
-	print "Closing thread on " . fileno($so_client) . "\n";
+    
+    sysread($so_client, $operand, 1);
+    
+    # Read memory
+    if    ($operand == 0x00) {
+	sysread($so_client, my $addr, 2) || exit;
+	syswrite($so_client, $processor->read($addr));
+    }
+    
+    # Write memory
+    elsif ($operand == 0x01) {
+	sysread($so_client, my $addr, 2) || exit;
+	sysread($so_client, my $byte, 1) || exit;
+	$processor->write($addr, $byte);
+    }
+    
+    # Set pin to high
+    elsif ($operand == 0x02) {
+	$processor->pin(sysread($so_client, my $pin, 1) || exit, 1);
+    }
+    
+    # Set pin to low
+    elsif ($operand == 0x03) {
+	$processor->pin(sysread($so_client, my $pin, 1) || exit, 0);
+    }
+    
+    print "Closing thread on " . fileno($so_client) . "\n";
     close $so_client;
 }
 
@@ -92,25 +92,25 @@ while (my $client  =  $so_obj->accept) {
     
     if (authenticate($cluster_id, $password)) {
 	
-		unless (exists($cluster_heap->{$cluster_id})) {
-			$cluster_heap->{$cluster_id}->{'queue'} = Thread::Queue->new();
-			
-			# Fire additional hardware up:
-			foreach my $module (@{$config->{'clusters'}->{$cluster_id}->{'hardware'}}) {
-				
-			}
-		}
-	
-		threads->create(
-			'machine_thread',
-			$client,                                 # socket object
-			$cluster_heap->{$cluster_id}->{'queue'}, # intra-cluster communication
-			MC9001->new(							 # Processing module library
-				memory_handler    => MC9001::Memory::TShared->new($cluster_id),
-			),
-		)->detach;
-	
+	unless (exists($cluster_heap->{$cluster_id})) {
+	    $cluster_heap->{$cluster_id}->{'queue'} = Thread::Queue->new();
+	    
+	    # Fire additional hardware up:
+	    foreach my $module (@{$config->{'clusters'}->{$cluster_id}->{'hardware'}}) {
+		
+	    }
 	}
+	
+	threads->create(
+	    'machine_thread',
+	    $client,                                 # socket object
+	    $cluster_heap->{$cluster_id}->{'queue'}, # intra-cluster communication
+	    MC9001->new(
+		memory_handler    => MC9001::Memory::TShared->new($cluster_id),
+	    ),
+	    )->detach;
+	
+    }
     
     else { close $client }
 }
