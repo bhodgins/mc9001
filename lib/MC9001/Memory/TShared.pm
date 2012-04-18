@@ -19,13 +19,13 @@ sub new {
 	bless $self, $class;
 }
 
-sub write {
+sub mem_write {
 	my ($self, $addr, $value) = @_;
 	
 	$self->{'memory'}->[$addr] = $value;
 }
 
-sub read {
+sub mem_read {
 	my ($self, $addr) = @_;
 
 	$self->{'memory'}->[$addr];
