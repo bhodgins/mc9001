@@ -37,6 +37,7 @@ sub new {
 	
 	# Misc:
 	'flags'       => 0,     # Processor status
+	'mneumonics'  => [],    # Mneumonic table
 	
     };
 
@@ -65,22 +66,35 @@ sub init {
     my $self = shift;
 
     $self->{'PC'} = $self->{'vectors'}->{'reset'}; # align program counter
-    $self->next_operation();
+
+  exec_op:
+    unless ($self->{'idle'}) {
+	
+    }
+
+    goto next_op;
 }
 
 sub next_operation {
     my $self = shift;
 
-    my $instr = $self->fetch(); # Fetch the next instruction
-    $self->{'PC'}++;            # Incrememnt the program counter
-    $self->execute($instr);
+    unless ($self->{'idle'}) {
+	my $instr = $self->fetch(); # Fetch the next instruction
+	$self->{'PC'}++;            # Incrememnt the program counter
+	$self->execute($instr);
+    }
 }
 
 sub fetch { $_[0]->mem_read( $_[0]->{'PC'} ) }
 
 sub execute {
+    my ($self, $instr) = @_;
 
+    my $mneumonic = $self->{'mneumonics'}->[$instr] || $self->break();
+    my $routine = 'instruction_' . $mneumonic;
+
+    eval ('$self->' . $routine . '()') if defined($routine);b
+    $@ if $@;
 }
 
 1;
-

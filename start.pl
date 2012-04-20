@@ -104,7 +104,7 @@ while (my $client  =  $so_obj->accept) {
 	threads->create(
 	    'machine_thread',
 	    $client,                                 # socket object
-	    $cluster_heap->{$cluster_id}->{'queue'}, # intra-cluster communication
+h	    $cluster_heap->{$cluster_id}->{'queue'}, # intra-cluster communication
 	    MC9001->new(
 		memory_handler    => MC9001::Memory::TShared->new($cluster_id),
 	    )->init(),
